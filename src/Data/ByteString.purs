@@ -37,6 +37,7 @@ import Node.Buffer (copy, create, fromString, read, size, toString, write) as Bu
 import Node.Buffer.Unsafe (slice) as Buffer
 import Node.Encoding (Encoding)
 
+-- | A space-efficient representation of an array of bytes.
 newtype ByteString = ByteString (CatList Buffer)
 derive newtype instance semigroupByteString :: Semigroup ByteString
 derive newtype instance monoidByteString :: Monoid ByteString
@@ -55,17 +56,22 @@ derive instance functorResult :: Functor ReadResult
 foreign import allocUnsafeImpl :: EffectFn1 Int Buffer
 foreign import equalsImpl :: Fn2 Buffer Buffer Boolean
 
+-- | *O(1)* An empty ByteString.
 empty :: ByteString
 empty = mempty
 
+-- | *O(n)* Retrieve the length of a ByteString.
 length :: ByteString -> Int
 length (ByteString l) = foldl combine 0 l
   where
     combine acc el = acc + bufferSize el
 
+-- | *O(1)* Create a ByteString from a Buffer. The original Buffer
+-- | should not be modified.
 unsafeFreeze :: Buffer -> ByteString
 unsafeFreeze = ByteString <<< List.singleton
 
+-- | *O(n)* Write the contents of a ByteString into a Buffer.
 flush :: ByteString -> Effect Buffer
 flush (ByteString CatNil) = Buffer.create 0
 flush (ByteString (CatCons buf (CatQueue Nil Nil))) = pure buf
@@ -78,9 +84,12 @@ flush bs @ (ByteString l) = do
       copied <- Buffer.copy 0 (bufferSize el) el 0 view
       pure $ Buffer.slice copied (bufferSize view) view
 
+-- | *O(n)* Flatten the contents of a ByteString so that it only
+-- | consists of a single chunk.
 compact :: ByteString -> Effect ByteString
 compact = map unsafeFreeze <<< flush
 
+-- | *O(n)* Split a ByteString in two parts at a given offset.
 splitAt :: Int -> ByteString -> Tuple ByteString ByteString
 splitAt n (ByteString l) =
   let Tuple a b = go n l
@@ -97,15 +106,18 @@ splitAt n (ByteString l) =
           in Tuple (List.cons h a) b
         Nothing -> mempty
 
+-- | *O(n)* Take first n bytes of a ByteString.
 take :: Int -> ByteString -> ByteString
 take n = fst <<< splitAt n
 
+-- | *O(n)* Take first n bytes of a ByteString or fail with an error.
 take' :: Int -> ByteString -> ReadResult ByteString
 take' n bs =
   case splitAt n bs of
     Tuple h t | length h >= n -> Success h t
     _ -> Failure "Tried to read past the buffer"
 
+-- | *O(n)* Drop first n bytes of a ByteString.
 drop :: Int -> ByteString -> ByteString
 drop n = snd <<< splitAt n
 
