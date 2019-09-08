@@ -14,12 +14,16 @@ module Data.ByteString
   , fromInt16LE
   , fromInt32BE
   , fromInt32LE
+  , fromFloat32BE
+  , fromFloat32LE
   , fromString
   , getInt8
   , getInt16BE
   , getInt16LE
   , getInt32BE
   , getInt32LE
+  , getFloat32BE
+  , getFloat32LE 
   , toString
   ) where
 
