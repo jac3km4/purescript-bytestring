@@ -1,7 +1,7 @@
 { name =
     "bytestring"
 , dependencies =
-    [ "effect", "catenable-lists", "node-buffer", "functions" ]
+    [ "effect", "catenable-lists", "node-buffer", "functions", "integers" ]
 , packages =
     ./packages.dhall
 , sources =

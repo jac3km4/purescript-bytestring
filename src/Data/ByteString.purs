@@ -30,6 +30,7 @@ import Data.CatList as List
 import Data.CatQueue (CatQueue(..))
 import Data.Foldable (all, foldM, foldl, foldr)
 import Data.Function.Uncurried (Fn2, runFn2)
+import Data.Int as Int
 import Data.List (List(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..), fst, snd)
@@ -37,8 +38,7 @@ import Effect (Effect)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
 import Effect.Unsafe (unsafePerformEffect)
 import Node.Buffer (Buffer, BufferValueType(..))
-import Node.Buffer (copy, create, fromString, read, size, toString, write) as Buffer
-import Node.Buffer.Unsafe (slice) as Buffer
+import Node.Buffer (copy, create, fromString, read, size, toString, write, slice) as Buffer
 import Node.Encoding (Encoding)
 
 -- | A space-efficient representation of an array of bytes.
@@ -126,45 +126,57 @@ drop :: Int -> ByteString -> ByteString
 drop n = snd <<< splitAt n
 
 fromInt8 :: Int -> ByteString
-fromInt8 = fromScalar Int8
+fromInt8 = fromScalar Int8 <<< Int.toNumber
 
 fromInt16BE :: Int -> ByteString
-fromInt16BE = fromScalar Int16BE
+fromInt16BE = fromScalar Int16BE <<< Int.toNumber
 
 fromInt16LE :: Int -> ByteString
-fromInt16LE = fromScalar Int16LE
+fromInt16LE = fromScalar Int16LE <<< Int.toNumber
 
 fromInt32BE :: Int -> ByteString
-fromInt32BE = fromScalar Int32BE
+fromInt32BE = fromScalar Int32BE <<< Int.toNumber
 
 fromInt32LE :: Int -> ByteString
-fromInt32LE = fromScalar Int32LE
+fromInt32LE = fromScalar Int32LE <<< Int.toNumber
+
+fromFloat32BE :: Number -> ByteString
+fromFloat32BE = fromScalar FloatBE
+
+fromFloat32LE :: Number -> ByteString
+fromFloat32LE = fromScalar FloatLE
 
 fromString :: String -> Encoding -> ByteString
 fromString str = unsafeFreeze <<< unsafePerformEffect <<< Buffer.fromString str
 
-fromScalar :: BufferValueType -> Int -> ByteString
+fromScalar :: BufferValueType -> Number -> ByteString
 fromScalar tpe n = unsafePerformEffect do
   buf <- runEffectFn1 allocUnsafeImpl (sizeOf tpe)
   Buffer.write tpe n 0 buf
   pure $ unsafeFreeze buf
 
 getInt8 :: ByteString -> ReadResult Int
-getInt8 = getScalar Int8
+getInt8 = map Int.floor <<< getScalar Int8
 
 getInt16BE :: ByteString -> ReadResult Int
-getInt16BE = getScalar Int16BE
+getInt16BE = map Int.floor <<< getScalar Int16BE
 
 getInt16LE :: ByteString -> ReadResult Int
-getInt16LE = getScalar Int16LE
+getInt16LE = map Int.floor <<< getScalar Int16LE
 
 getInt32BE :: ByteString -> ReadResult Int
-getInt32BE = getScalar Int32BE
+getInt32BE = map Int.floor <<< getScalar Int32BE
 
 getInt32LE :: ByteString -> ReadResult Int
-getInt32LE = getScalar Int32LE
+getInt32LE = map Int.floor <<< getScalar Int32LE
 
-getScalar :: BufferValueType -> ByteString -> ReadResult Int
+getFloat32BE :: ByteString -> ReadResult Number
+getFloat32BE = getScalar FloatBE
+
+getFloat32LE :: ByteString -> ReadResult Number
+getFloat32LE = getScalar FloatLE
+
+getScalar :: BufferValueType -> ByteString -> ReadResult Number
 getScalar tpe bs = unsafePerformEffect do
   let Tuple bs' rem = splitAt required bs
   buf <- flush bs'
