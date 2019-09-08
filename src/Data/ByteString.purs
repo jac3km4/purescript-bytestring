@@ -11,11 +11,15 @@ module Data.ByteString
   , drop
   , fromInt8
   , fromInt16BE
+  , fromInt16LE
   , fromInt32BE
+  , fromInt32LE
   , fromString
   , getInt8
   , getInt16BE
+  , getInt16LE
   , getInt32BE
+  , getInt32LE
   , toString
   ) where
 
@@ -127,8 +131,14 @@ fromInt8 = fromScalar Int8
 fromInt16BE :: Int -> ByteString
 fromInt16BE = fromScalar Int16BE
 
+fromInt16LE :: Int -> ByteString
+fromInt16LE = fromScalar Int16LE
+
 fromInt32BE :: Int -> ByteString
 fromInt32BE = fromScalar Int32BE
+
+fromInt32LE :: Int -> ByteString
+fromInt32LE = fromScalar Int32LE
 
 fromString :: String -> Encoding -> ByteString
 fromString str = unsafeFreeze <<< unsafePerformEffect <<< Buffer.fromString str
@@ -145,8 +155,14 @@ getInt8 = getScalar Int8
 getInt16BE :: ByteString -> ReadResult Int
 getInt16BE = getScalar Int16BE
 
+getInt16LE :: ByteString -> ReadResult Int
+getInt16LE = getScalar Int16LE
+
 getInt32BE :: ByteString -> ReadResult Int
 getInt32BE = getScalar Int32BE
+
+getInt32LE :: ByteString -> ReadResult Int
+getInt32LE = getScalar Int32LE
 
 getScalar :: BufferValueType -> ByteString -> ReadResult Int
 getScalar tpe bs = unsafePerformEffect do
